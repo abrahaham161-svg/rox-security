@@ -69,7 +69,7 @@ client.once('clientReady', async () => {
 
 client.login(config.token);
 
-// --- API server para recibir formularios ---
+// --- API server ---
 const express = require('express');
 const cors = require('cors');
 const apiApp = express();
@@ -77,10 +77,45 @@ apiApp.use(cors());
 apiApp.use(express.json());
 
 const OWNER_ID = '1133066682399739974';
+const ADMIN_KEY = process.env.ADMIN_KEY || 'admin123';
+const DATA_DIR = path.join(__dirname, 'data');
 
+function readJSON(file) {
+  try {
+    const p = path.join(DATA_DIR, file);
+    if (!fs.existsSync(p)) return [];
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch { return []; }
+}
+function writeJSON(file, data) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2));
+}
+
+function auth(req, res) {
+  if (req.query.key !== ADMIN_KEY) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+  return true;
+}
+
+// --- Form submission ---
 apiApp.post('/api/contact', async (req, res) => {
   const { gmail, social, servicio, servicioTexto, contenido } = req.body;
   try {
+    const subs = readJSON('submissions.json');
+    subs.push({
+      id: Date.now(),
+      gmail: gmail || '',
+      social: social || '',
+      servicio: servicio || '',
+      servicioTexto: servicioTexto || '',
+      contenido: contenido || '',
+      timestamp: new Date().toISOString()
+    });
+    writeJSON('submissions.json', subs);
+
     const user = await client.users.fetch(OWNER_ID);
     const embed = {
       color: 0x00ffc8,
@@ -98,6 +133,41 @@ apiApp.post('/api/contact', async (req, res) => {
     console.error('Error sending DM:', err);
     res.status(500).json({ ok: false, error: err.message });
   }
+});
+
+// --- View tracking ---
+apiApp.post('/api/track-view', (req, res) => {
+  const views = readJSON('views.json');
+  views.push({
+    id: Date.now(),
+    ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+    userAgent: (req.headers['user-agent'] || '').substring(0, 100),
+    timestamp: new Date().toISOString()
+  });
+  writeJSON('views.json', views);
+  res.json({ ok: true, total: views.length });
+});
+
+// --- Admin: submissions ---
+apiApp.get('/api/admin/submissions', (req, res) => {
+  if (!auth(req, res)) return;
+  const subs = readJSON('submissions.json');
+  res.json(subs.reverse());
+});
+
+// --- Admin: views ---
+apiApp.get('/api/admin/views', (req, res) => {
+  if (!auth(req, res)) return;
+  const views = readJSON('views.json');
+  res.json(views.reverse());
+});
+
+// --- Admin: stats ---
+apiApp.get('/api/admin/stats', (req, res) => {
+  if (!auth(req, res)) return;
+  const subs = readJSON('submissions.json');
+  const views = readJSON('views.json');
+  res.json({ submissions: subs.length, views: views.length });
 });
 
 const API_PORT = process.env.API_PORT || process.env.PORT || 3001;
