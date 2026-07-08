@@ -1,0 +1,185 @@
+{
+  "1513691261880635524": {
+    "action": "kick",
+    "whitelist": [
+      "1296852323641065517",
+      "1133066682399739974"
+    ],
+    "logs": [
+      {
+        "type": "success",
+        "title": "💾 Backup cargado",
+        "description": "Backup **gSyXTXKw** cargado por elias2212.\n✅ Roles restaurados\n✅ Canales restaurados\n✅ Configuración del servidor restaurada\n✅ Configuración del bot restaurada\n✅ Roles de 1 miembros restaurados",
+        "fields": [],
+        "timestamp": 1783279906718
+      }
+    ],
+    "canalWhite": [],
+    "verifyEnabled": true,
+    "guildName": "Rox Studios",
+    "noVerifiedRole": null,
+    "verifiedRole": null,
+    "verifyEmbed": {
+      "title": "Sistema De Verificacion Rox Studios",
+      "desc": "Presiona Verificarte Para Verificarte"
+    },
+    "verifyChannel": null,
+    "verifyTime": 31536000000,
+    "maxJoinsPerMinute": 10,
+    "maxJoinsPer10Seconds": 5,
+    "accountAgeMinutes": 30,
+    "logChannel": "1523411046486904885"
+  },
+  "1518074330599129178": {
+    "maxJoinsPerMinute": 10,
+    "maxJoinsPer10Seconds": 5,
+    "accountAgeMinutes": 30,
+    "action": "kick",
+    "whitelist": [
+      "1296852323641065517",
+      "1133066682399739974"
+    ],
+    "logs": [
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **D4nMNfvw** creado por elias2212.\n**Datos:** botConfig, server, channels, roles",
+        "fields": [],
+        "timestamp": 1783136151489
+      },
+      {
+        "type": "warn",
+        "title": "⛔ Verificación desactivada",
+        "description": "Desactivada por elias2212.",
+        "fields": [],
+        "timestamp": 1783180901481
+      },
+      {
+        "type": "warn",
+        "title": "⛔ Verificación desactivada",
+        "description": "Desactivada por elias2212.",
+        "fields": [],
+        "timestamp": 1783205343557
+      },
+      {
+        "type": "success",
+        "title": "✅ Verificación activada",
+        "description": "Tiempo: 5 minutos\nAcción: kick\nRol: <@&1523098602237591715>",
+        "fields": [],
+        "timestamp": 1783205647561
+      },
+      {
+        "type": "success",
+        "title": "✅ Verificación activada",
+        "description": "Tiempo: 365 días\nAcción: kick\nRol: <@&1523110142646812816>",
+        "fields": [],
+        "timestamp": 1783208191557
+      },
+      {
+        "type": "success",
+        "title": "✅ Verificación activada",
+        "description": "Tiempo: 365 días\nAcción: kick\nRol: <@&1523110142646812816>",
+        "fields": [],
+        "timestamp": 1783208195137
+      },
+      {
+        "type": "success",
+        "title": "✅ Verificación activada",
+        "description": "Tiempo: 365 días\nAcción: kick\nRol: <@&1523110142646812816>",
+        "fields": [],
+        "timestamp": 1783208198239
+      },
+      {
+        "type": "success",
+        "title": "✅ Verificación activada",
+        "description": "Tiempo: 365 días\nAcción: kick\nRol: <@&1523110142646812816>",
+        "fields": [],
+        "timestamp": 1783208198518
+      },
+      {
+        "type": "warn",
+        "title": "⚠️ Canal de verificación eliminado",
+        "description": "El canal **#verificate** fue eliminado.\nSe requiere configurar un nuevo canal de verificación con el comando `/verificacion`.",
+        "fields": [],
+        "timestamp": 1783208390693
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **AgnyF8qo** creado por elias2212.\n**Datos:** roles, channels, server, botConfig",
+        "fields": [],
+        "timestamp": 1783277404975
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **IzYLY7OM** creado por elias2212.\n**Datos:** roles, channels, server, botConfig",
+        "fields": [],
+        "timestamp": 1783277809864
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **gSyXTXKw** creado por elias2212.\n**Datos:** roles, channels, server, botConfig, members",
+        "fields": [],
+        "timestamp": 1783279754615
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **12rZXSde** creado por elias2212.\n**Datos:** roles, channels, server, botConfig, members",
+        "fields": [],
+        "timestamp": 1783280300716
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **PqUeDbxD** creado por elias2212.\n**Datos:** roles, channels, server, botConfig, members",
+        "fields": [],
+        "timestamp": 1783360403428
+      }
+    ],
+    "guildName": "Rox Studios",
+    "canalWhite": [],
+    "logChannel": "1522737960741634089"
+  },
+  "1468416355433976007": {
+    "maxJoinsPerMinute": 10,
+    "maxJoinsPer10Seconds": 5,
+    "accountAgeMinutes": 30,
+    "action": "kick",
+    "whitelist": [
+      "1296852323641065517",
+      "1133066682399739974"
+    ],
+    "guildName": "Rox Studios",
+    "canalWhite": [],
+    "logChannel": "1523413311138435074",
+    "verifiedRole": null,
+    "noVerifiedRole": null,
+    "verifyChannel": null,
+    "logs": [
+      {
+        "type": "success",
+        "title": "💾 Backup cargado",
+        "description": "Backup **12rZXSde** cargado por Desconocido\n✅ Roles restaurados\n✅ Canales restaurados\n✅ Configuración del servidor restaurada\n✅ Configuración del bot restaurada\n✅ Roles de 1 miembros restaurados",
+        "fields": [],
+        "timestamp": 1783280445245
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **4B6OrIgr** creado por elias2212.\n**Datos:** roles, channels, server, botConfig, members",
+        "fields": [],
+        "timestamp": 1783360950659
+      },
+      {
+        "type": "success",
+        "title": "💾 Backup creado",
+        "description": "Backup **2HDaD5uO** creado por elias2212.\n**Datos:** roles, channels, server, botConfig, members",
+        "fields": [],
+        "timestamp": 1783361166431
+      }
+    ]
+  }
+}

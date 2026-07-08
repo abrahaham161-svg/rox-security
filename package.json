@@ -1,0 +1,17 @@
+{
+  "name": "rox-security",
+  "version": "1.0.0",
+  "description": "Bot antiraid para Discord - Rox Security",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "cors": "^2.8.6",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1"
+  }
+}
