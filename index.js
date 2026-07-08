@@ -92,6 +92,10 @@ function writeJSON(file, data) {
   fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2));
 }
 
+function getIP(req) {
+  return (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+}
+
 function auth(req, res) {
   if (req.query.key !== ADMIN_KEY) {
     res.status(401).json({ error: 'Unauthorized' });
@@ -103,7 +107,11 @@ function auth(req, res) {
 // --- Form submission ---
 apiApp.post('/api/contact', async (req, res) => {
   const { gmail, social, servicio, servicioTexto, contenido } = req.body;
+  const ip = getIP(req);
   try {
+    const blocked = readJSON('blocked.json');
+    if (blocked.includes(ip)) return res.status(403).json({ error: 'Blocked' });
+
     const subs = readJSON('submissions.json');
     subs.push({
       id: Date.now(),
@@ -112,6 +120,8 @@ apiApp.post('/api/contact', async (req, res) => {
       servicio: servicio || '',
       servicioTexto: servicioTexto || '',
       contenido: contenido || '',
+      ip,
+      read: false,
       timestamp: new Date().toISOString()
     });
     writeJSON('submissions.json', subs);
@@ -138,7 +148,7 @@ apiApp.post('/api/contact', async (req, res) => {
 // --- View tracking ---
 apiApp.post('/api/track-view', async (req, res) => {
   const views = readJSON('views.json');
-  const ip = (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+  const ip = getIP(req);
   let pais = 'Desconocido';
   try {
     if (ip && ip !== 'unknown') {
@@ -157,11 +167,40 @@ apiApp.post('/api/track-view', async (req, res) => {
   res.json({ ok: true, total: views.length });
 });
 
-// --- Admin: submissions ---
+// --- Admin: submissions (with search) ---
 apiApp.get('/api/admin/submissions', (req, res) => {
   if (!auth(req, res)) return;
+  let subs = readJSON('submissions.json').reverse();
+  const q = (req.query.search || '').toLowerCase();
+  if (q) {
+    subs = subs.filter(s =>
+      (s.gmail || '').toLowerCase().includes(q) ||
+      (s.social || '').toLowerCase().includes(q) ||
+      (s.servicioTexto || '').toLowerCase().includes(q) ||
+      (s.contenido || '').toLowerCase().includes(q)
+    );
+  }
+  res.json(subs);
+});
+
+// --- Admin: delete submission ---
+apiApp.delete('/api/admin/submissions/:id', (req, res) => {
+  if (!auth(req, res)) return;
+  let subs = readJSON('submissions.json');
+  subs = subs.filter(s => s.id !== Number(req.params.id));
+  writeJSON('submissions.json', subs);
+  res.json({ ok: true });
+});
+
+// --- Admin: toggle read ---
+apiApp.post('/api/admin/submissions/:id/read', (req, res) => {
+  if (!auth(req, res)) return;
   const subs = readJSON('submissions.json');
-  res.json(subs.reverse());
+  const s = subs.find(s => s.id === Number(req.params.id));
+  if (!s) return res.status(404).json({ error: 'Not found' });
+  s.read = !s.read;
+  writeJSON('submissions.json', subs);
+  res.json({ ok: true, read: s.read });
 });
 
 // --- Admin: views ---
@@ -176,7 +215,34 @@ apiApp.get('/api/admin/stats', (req, res) => {
   if (!auth(req, res)) return;
   const subs = readJSON('submissions.json');
   const views = readJSON('views.json');
-  res.json({ submissions: subs.length, views: views.length });
+  const unread = subs.filter(s => !s.read).length;
+  res.json({ submissions: subs.length, unread, views: views.length });
+});
+
+// --- Admin: blocked IPs ---
+apiApp.get('/api/admin/blocked', (req, res) => {
+  if (!auth(req, res)) return;
+  res.json(readJSON('blocked.json'));
+});
+
+// --- Admin: block IP ---
+apiApp.post('/api/admin/block', (req, res) => {
+  if (!auth(req, res)) return;
+  const { ip } = req.body;
+  if (!ip) return res.status(400).json({ error: 'IP required' });
+  const blocked = readJSON('blocked.json');
+  if (!blocked.includes(ip)) blocked.push(ip);
+  writeJSON('blocked.json', blocked);
+  res.json({ ok: true });
+});
+
+// --- Admin: unblock IP ---
+apiApp.post('/api/admin/unblock', (req, res) => {
+  if (!auth(req, res)) return;
+  const { ip } = req.body;
+  const blocked = readJSON('blocked.json').filter(b => b !== ip);
+  writeJSON('blocked.json', blocked);
+  res.json({ ok: true });
 });
 
 const API_PORT = process.env.API_PORT || process.env.PORT || 3001;
