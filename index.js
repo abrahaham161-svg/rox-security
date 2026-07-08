@@ -136,12 +136,21 @@ apiApp.post('/api/contact', async (req, res) => {
 });
 
 // --- View tracking ---
-apiApp.post('/api/track-view', (req, res) => {
+apiApp.post('/api/track-view', async (req, res) => {
   const views = readJSON('views.json');
+  const ip = (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+  let pais = 'Desconocido';
+  try {
+    if (ip && ip !== 'unknown') {
+      const r = await fetch(`http://ip-api.com/json/${ip}?fields=country`);
+      const d = await r.json();
+      if (d.country) pais = d.country;
+    }
+  } catch {}
   views.push({
     id: Date.now(),
-    ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
-    userAgent: (req.headers['user-agent'] || '').substring(0, 100),
+    pais,
+    ip: ip.substring(0, 20),
     timestamp: new Date().toISOString()
   });
   writeJSON('views.json', views);
