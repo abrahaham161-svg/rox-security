@@ -245,5 +245,42 @@ apiApp.post('/api/admin/unblock', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Public: reviews ---
+apiApp.get('/api/reviews', (req, res) => {
+  const reviews = readJSON('reviews.json').reverse();
+  res.json(reviews);
+});
+
+apiApp.post('/api/reviews', (req, res) => {
+  const { name, stars, text } = req.body;
+  if (!name || !stars || stars < 1 || stars > 5) {
+    return res.status(400).json({ error: 'Name and stars (1-5) required' });
+  }
+  const reviews = readJSON('reviews.json');
+  reviews.push({
+    id: Date.now(),
+    name: name.trim().substring(0, 30),
+    stars: Number(stars),
+    text: (text || '').trim().substring(0, 500),
+    timestamp: new Date().toISOString()
+  });
+  writeJSON('reviews.json', reviews);
+  res.json({ ok: true });
+});
+
+// --- Admin: reviews ---
+apiApp.get('/api/admin/reviews', (req, res) => {
+  if (!auth(req, res)) return;
+  res.json(readJSON('reviews.json').reverse());
+});
+
+apiApp.delete('/api/admin/reviews/:id', (req, res) => {
+  if (!auth(req, res)) return;
+  let reviews = readJSON('reviews.json');
+  reviews = reviews.filter(r => r.id !== Number(req.params.id));
+  writeJSON('reviews.json', reviews);
+  res.json({ ok: true });
+});
+
 const API_PORT = process.env.API_PORT || process.env.PORT || 3001;
 apiApp.listen(API_PORT, () => console.log(`📨 API server on port ${API_PORT}`));
