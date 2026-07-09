@@ -9,12 +9,12 @@ const ACTIONS = {
   createRole: { label: 'Crear Roles', emoji: '🎭', premium: false },
   deleteRole: { label: 'Borrar Roles', emoji: '🗑️', premium: false },
   editRole: { label: 'Editar Roles', emoji: '✏️', premium: true },
-  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: true },
-  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: true },
+  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: false },
+  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: false },
   kick: { label: 'Expulsar Usuarios', emoji: '👢', premium: false },
   ban: { label: 'Banear Usuarios', emoji: '🔨', premium: false },
   unban: { label: 'Desbanear Usuarios', emoji: '✅', premium: false },
-  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: true },
+  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: false },
 };
 
 function getConfig(guildId) {
