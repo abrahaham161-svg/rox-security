@@ -13,7 +13,7 @@ module.exports = {
     const id = interaction.options.getString('id');
     const reason = interaction.options.getString('razon') || 'Sin motivo';
 
-    if (isNaN(id) || id.length < 15) {
+    if (!/^\d{17,19}$/.test(id)) {
       await interaction.reply({ embeds: [{ title: '❌', description: 'Eso no parece una ID válida\n📌 Una ID tiene 17-19 números', color: 0xff4444, footer: { text: 'Rox Security v1.0' } }], flags: MessageFlags.Ephemeral });
       return;
     }

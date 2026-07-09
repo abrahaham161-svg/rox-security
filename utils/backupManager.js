@@ -194,7 +194,7 @@ async function loadBackup(backupId, guild) {
         await Promise.allSettled(batch.map(r =>
           guild.roles.create({
             name: r.name,
-            colors: { primaryColor: r.color || 0x808080 },
+            color: r.color || 0x808080,
             hoist: r.hoist || false,
             mentionable: r.mentionable || false,
             permissions: BigInt(r.permissions || '0'),

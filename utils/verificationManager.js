@@ -3,6 +3,7 @@ const log = require('./logger');
 const captcha = require('./captcha');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ChannelType, PermissionFlagsBits } = require('discord.js');
 
+function sep() { return '━━━━━━━━━━━━━━━━━━━━━━━━'; }
 const timers = new Map();
 
 const TIME_OPTIONS = [
@@ -239,7 +240,7 @@ async function activateVerification(i) {
     if (!noVerified) {
       noVerified = await i.guild.roles.create({
         name: '🔵 No Verificado',
-        colors: { primaryColor: 0x666666 },
+        color: 0x666666,
         permissions: [],
         reason: 'Rox Security - Rol para usuarios no verificados',
       });
@@ -614,7 +615,7 @@ async function createNoVerifiedRole(i) {
     const oldRole = c.noVerifiedRole;
     const role = await i.guild.roles.create({
       name: '🔵 No Verificado',
-      colors: { primaryColor: randomColor() },
+      color: randomColor(),
       permissions: [],
       reason: 'Rox Security - Rol No Verificado',
     });
@@ -652,7 +653,7 @@ async function createNewRole(i) {
 
     const role = await i.guild.roles.create({
       name: '🟢 Verificado',
-      colors: { primaryColor: 0x2ecc71 },
+      color: 0x2ecc71,
       reason: 'Rox Security - Rol de verificado',
     });
 
@@ -787,7 +788,7 @@ async function handleVerifyButton(i) {
       }],
     });
     sentDm = true;
-    await logger.sendLog(i.guild, 'info', '📩 Código enviado', `Se envió verificación a **${i.user.tag}**`);
+    await log.sendLog(i.guild, 'info', '📩 Código enviado', `Se envió verificación a **${i.user.tag}**`);
   } catch {}
 
   await i.reply({
@@ -895,7 +896,6 @@ function startTimer(guildId, memberId, time) {
     timers.delete(key);
     try {
       const { REST } = require('discord.js');
-      require('dotenv').config();
       const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
       const member = await rest.get(`/guilds/${guildId}/members/${memberId}`).catch(() => null);
@@ -913,7 +913,7 @@ function startTimer(guildId, memberId, time) {
       if (action === 'ban') {
         await rest.put(`/guilds/${guildId}/bans/${memberId}`, { body: { reason } });
       } else {
-        await rest.delete(`/guilds/${guildId}/members/${memberId}`, { body: { reason } });
+        await rest.delete(`/guilds/${guildId}/members/${memberId}`, { reason });
       }
 
       if (config.logChannel) {

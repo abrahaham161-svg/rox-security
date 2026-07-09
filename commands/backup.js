@@ -175,7 +175,8 @@ module.exports = {
     const type = i.customId.split('_')[2];
 
     if (type === 'dl') {
-      const ok = await backupManager.deleteBackup(backupId);
+      let ok;
+      try { ok = await backupManager.deleteBackup(backupId); } catch { ok = false; }
       await i.reply({
         embeds: [{
           title: ok ? '🗑️ Backup Eliminado' : '❌ No encontrado',
@@ -192,7 +193,8 @@ module.exports = {
     }
 
     if (type === 'up') {
-      const backup = await backupManager.getBackup(backupId);
+      let backup;
+      try { backup = await backupManager.getBackup(backupId); } catch { backup = null; }
       if (!backup) {
         await i.reply({ embeds: [{ title: '❌ No encontrado', description: '━━━━━━━━━━━━━━━━━━━━━━━━\n❌ ID no existe\n━━━━━━━━━━━━━━━━━━━━━━━━', color: 0xff4444, footer: { text: 'Rox Security v1.0' } }], flags: MessageFlags.Ephemeral });
         return;
@@ -236,7 +238,8 @@ module.exports = {
         flags: MessageFlags.Ephemeral,
       });
 
-      const result = await backupManager.loadBackup(backupId, i.guild);
+      let result;
+      try { result = await backupManager.loadBackup(backupId, i.guild); } catch (e) { result = { success: false, error: e.message }; }
       const embedResult = result.success
         ? { title: '✅ Backup Cargado', description: '━━━━━━━━━━━━━━━━━━━━━━━━\nBackup **' + backupId + '** cargado correctamente.\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n' + result.results.join('\n'), color: 0x00ff88 }
         : { title: '❌ Error', description: result.error, color: 0xff4444 };

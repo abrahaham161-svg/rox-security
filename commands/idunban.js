@@ -11,7 +11,7 @@ module.exports = {
   async execute(interaction) {
     const id = interaction.options.getString('id');
 
-    if (isNaN(id) || id.length < 15) {
+    if (!/^\d{17,19}$/.test(id)) {
       await interaction.reply({ embeds: [{ title: '❌', description: 'Eso no parece una ID válida', color: 0xff4444, footer: { text: 'Rox Security v1.0' } }], flags: MessageFlags.Ephemeral });
       return;
     }
