@@ -216,7 +216,7 @@ apiApp.get('/api/admin/stats', (req, res) => {
   const subs = readJSON('submissions.json');
   const views = readJSON('views.json');
   const unread = subs.filter(s => !s.read).length;
-  res.json({ submissions: subs.length, unread, views: views.length });
+  res.json({ submissions: subs.length, unread, views: views.length, commands: client.commands.size });
 });
 
 // --- Admin: blocked IPs ---
