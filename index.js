@@ -282,5 +282,29 @@ apiApp.delete('/api/admin/reviews/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Admin: passwords ---
+apiApp.get('/api/admin/passwords', (req, res) => {
+  if (!auth(req, res)) return;
+  res.json(readJSON('passwords.json'));
+});
+
+apiApp.post('/api/admin/passwords', (req, res) => {
+  if (!auth(req, res)) return;
+  const { label, value } = req.body;
+  if (!label || !value) return res.status(400).json({ error: 'label and value required' });
+  const passwords = readJSON('passwords.json');
+  passwords.push({ id: Date.now(), label: label.trim(), value: value.trim(), timestamp: new Date().toISOString() });
+  writeJSON('passwords.json', passwords);
+  res.json({ ok: true });
+});
+
+apiApp.delete('/api/admin/passwords/:id', (req, res) => {
+  if (!auth(req, res)) return;
+  let passwords = readJSON('passwords.json');
+  passwords = passwords.filter(p => p.id !== Number(req.params.id));
+  writeJSON('passwords.json', passwords);
+  res.json({ ok: true });
+});
+
 const API_PORT = process.env.API_PORT || process.env.PORT || 3001;
 apiApp.listen(API_PORT, () => console.log(`📨 API server on port ${API_PORT}`));
