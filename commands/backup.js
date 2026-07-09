@@ -236,7 +236,7 @@ module.exports = {
         flags: MessageFlags.Ephemeral,
       });
 
-      const result = await backupManager.loadBackup(backupId, guild);
+      const result = await backupManager.loadBackup(backupId, i.guild);
       const embedResult = result.success
         ? { title: '✅ Backup Cargado', description: '━━━━━━━━━━━━━━━━━━━━━━━━\nBackup **' + backupId + '** cargado correctamente.\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n' + result.results.join('\n'), color: 0x00ff88 }
         : { title: '❌ Error', description: result.error, color: 0xff4444 };
