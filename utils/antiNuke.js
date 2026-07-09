@@ -3,29 +3,23 @@ const db = require('./database');
 const actionLog = new Map();
 
 const ACTIONS = {
-  createChannel: { label: 'Crear Canales', emoji: '📁', premium: false, defaultLimit: 1 },
-  deleteChannel: { label: 'Borrar Canales', emoji: '🗑️', premium: false, defaultLimit: 1 },
-  editChannel: { label: 'Editar Canales', emoji: '✏️', premium: true, defaultLimit: 1 },
-  createRole: { label: 'Crear Roles', emoji: '🎭', premium: false, defaultLimit: 1 },
-  deleteRole: { label: 'Borrar Roles', emoji: '🗑️', premium: false, defaultLimit: 1 },
-  editRole: { label: 'Editar Roles', emoji: '✏️', premium: true, defaultLimit: 1 },
-  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: true, defaultLimit: 1 },
-  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: true, defaultLimit: 1 },
-  kick: { label: 'Expulsar Usuarios', emoji: '👢', premium: false, defaultLimit: 3 },
-  ban: { label: 'Banear Usuarios', emoji: '🔨', premium: false, defaultLimit: 3 },
-  unban: { label: 'Desbanear Usuarios', emoji: '✅', premium: false, defaultLimit: 3 },
-  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: true, defaultLimit: 1 },
+  createChannel: { label: 'Crear Canales', emoji: '📁', premium: false },
+  deleteChannel: { label: 'Borrar Canales', emoji: '🗑️', premium: false },
+  editChannel: { label: 'Editar Canales', emoji: '✏️', premium: true },
+  createRole: { label: 'Crear Roles', emoji: '🎭', premium: false },
+  deleteRole: { label: 'Borrar Roles', emoji: '🗑️', premium: false },
+  editRole: { label: 'Editar Roles', emoji: '✏️', premium: true },
+  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: true },
+  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: true },
+  kick: { label: 'Expulsar Usuarios', emoji: '👢', premium: false },
+  ban: { label: 'Banear Usuarios', emoji: '🔨', premium: false },
+  unban: { label: 'Desbanear Usuarios', emoji: '✅', premium: false },
+  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: true },
 };
 
 function getConfig(guildId) {
   const c = db.get(guildId) || {};
-  if (!c.antiNuke) {
-    c.antiNuke = {};
-    for (const [key, def] of Object.entries(ACTIONS)) {
-      c.antiNuke[key] = { enabled: !def.premium, limit: def.defaultLimit };
-    }
-    db.set(guildId, c);
-  }
+  if (!c.antiNuke) { c.antiNuke = {}; db.set(guildId, c); }
   return c.antiNuke;
 }
 

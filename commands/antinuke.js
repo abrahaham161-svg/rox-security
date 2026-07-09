@@ -108,7 +108,7 @@ function buildMenu(guild) {
       const a = config[k] || {};
       if (info.premium) return '🔒 ' + info.label;
       const status = a.enabled !== false ? '✅' : '⛔';
-      return status + ' ' + info.label + ' — ' + (a.limit || info.defaultLimit) + '/min';
+      return status + ' ' + info.label + ' — ' + (a.limit || 1) + '/min';
     });
     lines.push('**' + cat.name + '**\n' + items.join('\n'));
   }
@@ -179,7 +179,7 @@ function buildActionPanel(guild, actionType, info, action) {
       color: on ? 0x00ff88 : 0xff4444,
       fields: [
         { name: '📊 Estado sistema', value: on ? '✅ **Activado**' : '⛔ **Desactivado**', inline: true },
-        { name: '⚡ Acciones por minuto', value: '**' + (action.limit || info.defaultLimit) + '**', inline: true },
+        { name: '⚡ Acciones por minuto', value: '**' + (action.limit || 1) + '**', inline: true },
       ],
       footer: { text: 'Rox Security v1.0' },
       timestamp: new Date().toISOString(),
