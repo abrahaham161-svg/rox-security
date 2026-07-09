@@ -180,6 +180,7 @@ async function loadBackup(backupId, guild) {
 
   // ============ ROLES ============
   if (data.roles) {
+    console.time('restore:roles');
     try {
       const deletable = guild.roles.cache.filter(r => !r.managed && r.id !== guild.id && botRole && r.position < botRole.position);
       await Promise.all(Array.from(deletable.values(), role =>
@@ -187,10 +188,10 @@ async function loadBackup(backupId, guild) {
       ));
 
       const sorted = data.roles.sort((a, b) => a.position - b.position);
-      const batchSize = 5;
-      for (let i = 0; i < sorted.length; i += batchSize) {
-        const batch = sorted.slice(i, i + batchSize);
-        const results = await Promise.allSettled(batch.map(r =>
+      const BATCH = 10;
+      for (let i = 0; i < sorted.length; i += BATCH) {
+        const batch = sorted.slice(i, i + BATCH);
+        await Promise.allSettled(batch.map(r =>
           guild.roles.create({
             name: r.name,
             colors: { primaryColor: r.color || 0x808080 },
@@ -204,10 +205,12 @@ async function loadBackup(backupId, guild) {
 
       results.push('✅ Roles restaurados');
     } catch (e) { results.push('❌ Roles: ' + e.message); }
+    console.timeEnd('restore:roles');
   }
 
   // ============ CANALES ============
   if (data.channels) {
+    console.time('restore:channels');
     try {
       const chans = Array.from(guild.channels.cache.values());
       await Promise.all(chans.map(c =>
@@ -234,7 +237,7 @@ async function loadBackup(backupId, guild) {
       const others = data.channels.filter(ch => ch.type !== 4).sort((a, b) => a.position - b.position);
       const catMap = new Map();
 
-      const BATCH = 5;
+      const BATCH = 10;
       for (let i = 0; i < categories.length; i += BATCH) {
         const batch = categories.slice(i, i + BATCH);
         await Promise.allSettled(batch.map(cat =>
@@ -262,6 +265,7 @@ async function loadBackup(backupId, guild) {
       }
       results.push('✅ Canales restaurados');
     } catch (e) { results.push('❌ Canales: ' + e.message); }
+    console.timeEnd('restore:channels');
   }
 
   // ============ SERVER ============
