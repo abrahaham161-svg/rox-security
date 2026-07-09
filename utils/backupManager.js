@@ -28,10 +28,12 @@ function generateId() {
 }
 
 async function createBackup(guild, options) {
+  const tStart = Date.now();
   const data = {};
   const guildData = database.get(guild.id) || {};
 
   if (options.roles) {
+    console.time('backup:roles');
     data.roles = guild.roles.cache
       .filter(r => r.id !== guild.id)
       .map(r => ({
@@ -45,9 +47,11 @@ async function createBackup(guild, options) {
         icon: r.icon ? r.icon : null,
         unicodeEmoji: r.unicodeEmoji || null,
       }));
+    console.timeEnd('backup:roles');
   }
 
   if (options.channels) {
+    console.time('backup:channels');
     data.channels = guild.channels.cache
       .map(c => ({
         id: c.id,
@@ -67,14 +71,18 @@ async function createBackup(guild, options) {
           deny: o.deny.bitfield.toString(),
         })),
       }));
+    console.timeEnd('backup:channels');
   }
 
   if (options.server) {
+    console.time('backup:server');
     const iconUrl = guild.iconURL({ size: 256 });
     let iconBase64 = null;
     if (iconUrl) {
       try {
-        const res = await fetch(iconUrl);
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(iconUrl, { signal: ctrl.signal });
         const buf = Buffer.from(await res.arrayBuffer());
         iconBase64 = buf.toString('base64');
       } catch {}
@@ -84,15 +92,18 @@ async function createBackup(guild, options) {
       iconBase64,
       description: guild.description || null,
     };
+    console.timeEnd('backup:server');
   }
 
   if (options.members) {
+    console.time('backup:members');
     data.members = {};
     for (const [, member] of guild.members.cache) {
       if (member.user.bot) continue;
       const roles = member.roles.cache.filter(r => r.id !== guild.id).map(r => r.id);
       if (roles.length > 0) data.members[member.id] = roles;
     }
+    console.timeEnd('backup:members');
   }
 
   if (options.botConfig) {
@@ -120,6 +131,7 @@ async function createBackup(guild, options) {
     data.botConfig = clean;
   }
 
+  console.log(`⏱️ Backup creado en ${Date.now() - tStart}ms (roles:${data.roles?.length||0}, canales:${data.channels?.length||0}, miembros:${Object.keys(data.members||{}).length})`);
   const id = generateId();
   cache[id] = {
     id,
@@ -175,18 +187,19 @@ async function loadBackup(backupId, guild) {
       ));
 
       const sorted = data.roles.sort((a, b) => a.position - b.position);
-      for (const r of sorted) {
-        try {
-          const created = await guild.roles.create({
+      const batchSize = 5;
+      for (let i = 0; i < sorted.length; i += batchSize) {
+        const batch = sorted.slice(i, i + batchSize);
+        const results = await Promise.allSettled(batch.map(r =>
+          guild.roles.create({
             name: r.name,
             colors: { primaryColor: r.color || 0x808080 },
             hoist: r.hoist || false,
             mentionable: r.mentionable || false,
             permissions: BigInt(r.permissions || '0'),
             reason: 'Rox Security - Backup restore',
-          });
-          if (r.id) roleMap.set(r.id, created.id);
-        } catch {}
+          }).then(created => { if (r.id) roleMap.set(r.id, created.id); })
+        ));
       }
 
       results.push('✅ Roles restaurados');
@@ -221,34 +234,31 @@ async function loadBackup(backupId, guild) {
       const others = data.channels.filter(ch => ch.type !== 4).sort((a, b) => a.position - b.position);
       const catMap = new Map();
 
-      for (const cat of categories) {
-        try {
-          const created = await guild.channels.create({
-            name: cat.name,
-            type: 4,
+      const BATCH = 5;
+      for (let i = 0; i < categories.length; i += BATCH) {
+        const batch = categories.slice(i, i + BATCH);
+        await Promise.allSettled(batch.map(cat =>
+          guild.channels.create({
+            name: cat.name, type: 4,
             permissionOverwrites: filterPerms(cat.permissionOverwrites || []),
             reason: 'Rox Security - Backup restore',
-          });
-          if (cat.id) catMap.set(cat.id, created.id);
-        } catch (e) { results.push('⚠️ Categoría "' + cat.name + '": ' + e.message); }
+          }).then(created => { if (cat.id) catMap.set(cat.id, created.id); })
+            .catch(e => { results.push('⚠️ Categoría "' + cat.name + '": ' + e.message); })
+        ));
       }
 
-      for (const ch of others) {
-        try {
-          const newParent = catMap.get(ch.parentId) || null;
-          await guild.channels.create({
-            name: ch.name,
-            type: ch.type,
-            topic: ch.topic,
-            nsfw: ch.nsfw || false,
-            bitrate: ch.bitrate || null,
-            userLimit: ch.userLimit || 0,
-            parent: newParent,
+      for (let i = 0; i < others.length; i += BATCH) {
+        const batch = others.slice(i, i + BATCH);
+        await Promise.allSettled(batch.map(ch =>
+          guild.channels.create({
+            name: ch.name, type: ch.type, topic: ch.topic, nsfw: ch.nsfw || false,
+            bitrate: ch.bitrate || null, userLimit: ch.userLimit || 0,
+            parent: catMap.get(ch.parentId) || null,
             rateLimitPerUser: ch.slowMode || 0,
             permissionOverwrites: filterPerms(ch.permissionOverwrites || []),
             reason: 'Rox Security - Backup restore',
-          });
-        } catch (e) { results.push('⚠️ Canal "' + ch.name + '": ' + e.message); }
+          }).catch(e => { results.push('⚠️ Canal "' + ch.name + '": ' + e.message); })
+        ));
       }
       results.push('✅ Canales restaurados');
     } catch (e) { results.push('❌ Canales: ' + e.message); }
