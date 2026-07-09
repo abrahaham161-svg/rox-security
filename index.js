@@ -78,7 +78,7 @@ apiApp.use(express.json());
 
 const OWNER_ID = '1133066682399739974';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'admin123';
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 
 function readJSON(file) {
   try {
