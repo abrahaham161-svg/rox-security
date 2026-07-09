@@ -1,7 +1,7 @@
 const db = require('./database');
 const log = require('./logger');
 const backupCmd = require('../commands/backup');
-const antiRaidCmd = require('../commands/antiraid');
+const antiNukeCmd = require('../commands/antinuke');
 const ver = require('./verificationManager');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, UserSelectMenuBuilder, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ChannelType } = require('discord.js');
 
@@ -60,9 +60,9 @@ async function handle(i) {
     else if (id.startsWith('bk_sel')) await backupCmd.handleSelect(i);
     else if (id.startsWith('mod_bk')) await backupCmd.handleModal(i);
     else if (id.startsWith('bk')) await backupCmd.handleButton(i);
-    else if (id.startsWith('ar_')) {
-      if (i.isModalSubmit()) await antiRaidCmd.handleModal(i);
-      else await antiRaidCmd.handleButton(i);
+    else if (id.startsWith('an_')) {
+      if (i.isModalSubmit()) await antiNukeCmd.handleModal(i);
+      else await antiNukeCmd.handleButton(i);
     }
     else if (id.startsWith('ver_')) await handleVerification(i);
     else if (id === 'verify_btn') await ver.handleVerifyButton(i);
@@ -307,7 +307,7 @@ async function hpCat(i) {
   if (i.customId === 'help_menu') k = ({ seguridad:'sg', moderacion:'md', verificacion:'vr', todos:'td', utilidades:'ut' })[i.values[0]] || 'td';
   else k = i.customId.split('_')[1];
     const cats = {
-    sg: { t:'🛡️ SEGURIDAD', c:0x00d4ff, d:`${sep()}\nProtege tu servidor contra raids y accesos no deseados.\n${sep()}`, f:[{n:'/setup', v:'Configurar la protección'},{n:'/antiraid', v:'Anti-raid con botones'},{n:'/settings', v:'Ver toda la configuración'},{n:'/check', v:'Estado de un usuario'},{n:'/status', v:'Estado de la protección'},{n:'/logs', v:'Ver eventos guardados'}] },
+    sg: { t:'🛡️ SEGURIDAD', c:0x00d4ff, d:`${sep()}\nProtege tu servidor contra raids y accesos no deseados.\n${sep()}`, f:[{n:'/setup', v:'Configurar la protección'},{n:'/antinuke', v:'Anti-nuke por acciones'},{n:'/settings', v:'Ver toda la configuración'},{n:'/check', v:'Estado de un usuario'},{n:'/status', v:'Estado de la protección'},{n:'/logs', v:'Ver eventos guardados'}] },
     md: { t:'👮 MODERACIÓN', c:0xff6600, d:`${sep()}\nMantén el orden con herramientas de moderación.\n${sep()}`, f:[{n:'/punish', v:'Expulsar o bloquear'},{n:'/idban', v:'Banear por ID'},{n:'/idunban', v:'Desbanear por ID'},{n:'/lock', v:'Bloquear canal'},{n:'/unlock', v:'Desbloquear canal'},{n:'/clear', v:'Borrar mensajes'},{n:'/nuke', v:'Resetear canal'}] },
     vr: { t:'✅ VERIFICACIÓN', c:0x00ff88, d:`${sep()}\nEvita bots y usuarios no deseados.\n${sep()}`, f:[{n:'/verificacion', v:'Configurar el sistema'},{n:'/whitelist', v:'Añadir/remover usuarios y canales en whitelist'}] },
     ut: { t:'🔧 UTILIDADES', c:0x3498db, d:`${sep()}\nInformación del servidor y herramientas útiles.\n${sep()}`, f:[{n:'/ping', v:'Latencia del bot'},{n:'/server', v:'Info del servidor'},{n:'/perfil', v:'Tu perfil de seguridad'},{n:'/invite', v:'Invitar el bot'},{n:'/backup', v:'Respaldar configuración'},{n:'/tutorial', v:'Guía rápida'}] },
