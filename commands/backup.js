@@ -1,4 +1,4 @@
-const { PermissionFlagsBits, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
 const backupManager = require('../utils/backupManager');
 const database = require('../utils/database');
 const logger = require('../utils/logger');
@@ -6,10 +6,12 @@ const logger = require('../utils/logger');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('backup')
-    .setDescription('Gestionar respaldos del servidor')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDescription('Gestionar respaldos del servidor'),
 
   async execute(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ Solo el dueño del servidor puede usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('bk_cr').setLabel('💾 Crear Backup').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId('bk_ld').setLabel('📂 Cargar Backup').setStyle(ButtonStyle.Primary),
@@ -51,7 +53,7 @@ module.exports = {
         });
       }
 
-      const options = id === 'bk_sel_cr' ? i.values.reduce((acc, v) => { acc[v] = true; return acc; }, {}) : allOptions;
+      const options = id === 'bk_sel_cr' && i.values ? i.values.reduce((acc, v) => { acc[v] = true; return acc; }, {}) : allOptions;
 
       try {
         const backupId = await backupManager.createBackup(i.guild, options);

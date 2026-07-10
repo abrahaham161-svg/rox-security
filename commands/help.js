@@ -8,7 +8,7 @@ module.exports = {
   async execute(interaction) {
     const embed = {
       title: '🛡️ Rox Security',
-      description: '━━━━━━━━━━━━━━━━━━━━━━━━\n**Sistema de protección para tu servidor**\n━━━━━━━━━━━━━━━━━━━━━━━━\n\nUsa `/panel` para abrir el panel de control.\nUsa `/verificacion` para configurar la verificación.',
+      description: '━━━━━━━━━━━━━━━━━━━━━━━━\n**Sistema de protección para tu servidor**\n━━━━━━━━━━━━━━━━━━━━━━━━\n\nUsa `/panel` para abrir el panel de control.\nUsa `/antiraid` para configurar la protección anti-raid.\nUsa `/antinuke` para configurar la protección anti-nuke.',
       color: 0x00d4ff,
       footer: { text: 'Rox Security v1.0' },
       timestamp: new Date().toISOString(),

@@ -4,10 +4,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('unlock')
     .setDescription('Desbloquear un canal para que todos puedan escribir')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addChannelOption(opt => opt.setName('canal').setDescription('El canal a desbloquear (por defecto este)')),
 
   async execute(interaction) {
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels) && interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     const channel = interaction.options.getChannel('canal') || interaction.channel;
     if (!channel.isTextBased()) {
       await interaction.reply({ embeds: [{ title: '❌ Error', description: '━━━━━━━━━━━━━━━━━━━━━━━━\nSolo canales de texto.\n━━━━━━━━━━━━━━━━━━━━━━━━', color: 0xff4444, footer: { text: 'Rox Security v1.0' } }], flags: MessageFlags.Ephemeral });

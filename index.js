@@ -40,7 +40,7 @@ for (const file of eventFiles) {
 client.on('error', console.error);
 process.on('unhandledRejection', (e) => console.error('Unhandled:', e));
 
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} está online!`);
 
   const commands = client.commands.map(cmd => cmd.data.toJSON());

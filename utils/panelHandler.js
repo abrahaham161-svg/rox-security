@@ -2,8 +2,9 @@ const db = require('./database');
 const log = require('./logger');
 const backupCmd = require('../commands/backup');
 const antiNukeCmd = require('../commands/antinuke');
+const antiRaidCmd = require('../commands/antiraid');
 const ver = require('./verificationManager');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, UserSelectMenuBuilder, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ChannelType } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, UserSelectMenuBuilder, ChannelSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ChannelType } = require('discord.js');
 
 const pending = new Map();
 
@@ -22,7 +23,7 @@ function mainPanel(guild) {
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('st').setLabel('📊 Estado').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('lg').setLabel('📋 Registros').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('stp').setLabel('⚙️ Configurar').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('ar_refresh').setLabel('🛡️ Anti-Raid').setStyle(ButtonStyle.Secondary),
       ),
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('wl').setLabel('📜 Whitelist').setStyle(ButtonStyle.Primary),
@@ -40,12 +41,6 @@ async function handle(i) {
     if (id === 'main') await i.update(mainPanel(i.guild));
     else if (id === 'st' || id === 'st_r') await statusView(i);
     else if (id === 'lg' || id === 'lg_r') await logsView(i);
-    else if (id === 'stp') await setupView(i);
-    else if (id === 'stp_v') await toggle('verifyEnabled', !(db.get(i.guild.id)?.verifyEnabled ?? true), i);
-    else if (id === 'stp_a') await toggle('action', db.get(i.guild.id)?.action === 'ban' ? 'kick' : 'ban', i);
-    else if (id === 'stp_m_ch') await i.update({ components: [new ActionRowBuilder().addComponents(new ChannelSelectMenuBuilder().setCustomId('sel_stp_ch').setPlaceholder('Elige un canal...').addChannelTypes(ChannelType.GuildText)), new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('stp').setLabel('◀ Volver').setStyle(ButtonStyle.Secondary))] });
-    else if (id === 'stp_m_rl') await i.update({ components: [new ActionRowBuilder().addComponents(new RoleSelectMenuBuilder().setCustomId('sel_stp_rl').setPlaceholder('Elige un rol...')), new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('stp').setLabel('◀ Volver').setStyle(ButtonStyle.Secondary))] });
-    else if (id.startsWith('stp_m_')) await showModal(i);
     else if (id === 'wl') await showWlMenu(i);
     else if (id === 'wl_ul') await wlList(i);
     else if (id === 'wl_ua' || id === 'wl_ur') await pickUser(i, 'wl');
@@ -64,6 +59,7 @@ async function handle(i) {
       if (i.isModalSubmit()) await antiNukeCmd.handleModal(i);
       else await antiNukeCmd.handleButton(i);
     }
+    else if (id.startsWith('ar_')) await antiRaidCmd.handleButton(i);
     else if (id.startsWith('ver_')) await handleVerification(i);
     else if (id === 'verify_btn') await ver.handleVerifyButton(i);
     else if (id === 'verify_showmodal') await ver.showVerifyModal(i);
@@ -124,61 +120,6 @@ async function logsView(i) {
       new ButtonBuilder().setCustomId('main').setLabel('◀ Menú').setStyle(ButtonStyle.Secondary),
     )],
   });
-}
-
-// ===== CONFIGURAR =====
-async function setupView(i) {
-  const c = db.get(i.guild.id) || {};
-  await i.update({
-    embeds: [{
-      title: '⚙️ CONFIGURACIÓN',
-      description: `${sep()}\nAjustes generales del servidor.\n${sep()}`,
-      color: 0x00d4ff,
-      fields: [
-        { name: '⚡ Acción antiraid', value: `**${c.action||'kick'}** al detectar raid`, inline: true },
-        { name: '✅ Verificación', value: (c.verifyEnabled!==false)?'**Activada**':'**Desactivada**', inline: true },
-        { name: '📢 Canal de logs', value: c.logChannel ? `<#${c.logChannel}>` : '❌ No configurado', inline: false },
-        { name: '🎖️ Rol verificado', value: c.verifiedRole ? `<@&${c.verifiedRole}>` : '❌ No configurado', inline: true },
-      ],
-      footer: { text: 'Rox Security v1.0' },
-      timestamp: new Date().toISOString(),
-    }],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('stp_a').setLabel('🔄 Cambiar acción').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('stp_v').setLabel('🔄 Verificación').setStyle(ButtonStyle.Secondary),
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('stp_m_ch').setLabel('📢 Canal logs').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('stp_m_rl').setLabel('🎖️ Rol verificado').setStyle(ButtonStyle.Secondary),
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('main').setLabel('◀ Menú').setStyle(ButtonStyle.Danger),
-      ),
-    ],
-  });
-}
-
-async function toggle(key, val, i) {
-  const c = db.get(i.guild.id) || {};
-  c[key] = val;
-  if (!c.guildName) c.guildName = i.guild.name;
-  db.set(i.guild.id, c);
-  const label = key === 'verifyEnabled' ? 'Verificación' : 'Acción';
-  const display = key === 'verifyEnabled' ? (val ? '✅ Activada' : '⛔ Desactivada') : (val ? 'ban' : 'kick');
-  await i.update({
-    embeds: [{
-      title: '✅ Cambiado',
-      description: `${sep()}\n**${label}:** ${display}\n${sep()}`,
-      color: 0x00ff88,
-      footer: { text: 'Rox Security v1.0' },
-    }],
-    components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('stp').setLabel('◀ Volver').setStyle(ButtonStyle.Secondary))],
-  });
-}
-
-async function showModal(i) {
-  // Ya no se usa para joins limits, se deja por compatibilidad
 }
 
 // ===== WHITELIST =====
@@ -307,11 +248,11 @@ async function hpCat(i) {
   if (i.customId === 'help_menu') k = ({ seguridad:'sg', moderacion:'md', verificacion:'vr', todos:'td', utilidades:'ut' })[i.values[0]] || 'td';
   else k = i.customId.split('_')[1];
     const cats = {
-    sg: { t:'🛡️ SEGURIDAD', c:0x00d4ff, d:`${sep()}\nProtege tu servidor contra raids y accesos no deseados.\n${sep()}`, f:[{n:'/setup', v:'Configurar la protección'},{n:'/antinuke', v:'Anti-nuke por acciones'},{n:'/settings', v:'Ver toda la configuración'},{n:'/check', v:'Estado de un usuario'},{n:'/status', v:'Estado de la protección'},{n:'/logs', v:'Ver eventos guardados'}] },
-    md: { t:'👮 MODERACIÓN', c:0xff6600, d:`${sep()}\nMantén el orden con herramientas de moderación.\n${sep()}`, f:[{n:'/punish', v:'Expulsar o bloquear'},{n:'/idban', v:'Banear por ID'},{n:'/idunban', v:'Desbanear por ID'},{n:'/lock', v:'Bloquear canal'},{n:'/unlock', v:'Desbloquear canal'},{n:'/clear', v:'Borrar mensajes'},{n:'/nuke', v:'Resetear canal'}] },
+    sg: { t:'🛡️ SEGURIDAD', c:0x00d4ff, d:`${sep()}\nProtege tu servidor contra raids y accesos no deseados.\n${sep()}`, f:[{n:'/antiraid', v:'Anti-raid (joins masivos)'},{n:'/antinuke', v:'Anti-nuke por acciones'},{n:'/settings', v:'Ver toda la configuración'},{n:'/check', v:'Estado de un usuario'},{n:'/status', v:'Estado de la protección'},{n:'/logs', v:'Ver eventos guardados'}] },
+    md: { t:'👮 MODERACIÓN', c:0xff6600, d:`${sep()}\nMantén el orden con herramientas de moderación.\n${sep()}`, f:[{n:'/ban', v:'Bloquear usuario'},{n:'/kick', v:'Expulsar usuario'},{n:'/idban', v:'Banear por ID'},{n:'/idunban', v:'Desbanear por ID'},{n:'/lock', v:'Bloquear canal'},{n:'/unlock', v:'Desbloquear canal'},{n:'/clear', v:'Borrar mensajes'},{n:'/nuke', v:'Resetear canal'}] },
     vr: { t:'✅ VERIFICACIÓN', c:0x00ff88, d:`${sep()}\nEvita bots y usuarios no deseados.\n${sep()}`, f:[{n:'/verificacion', v:'Configurar el sistema'},{n:'/whitelist', v:'Añadir/remover usuarios y canales en whitelist'}] },
     ut: { t:'🔧 UTILIDADES', c:0x3498db, d:`${sep()}\nInformación del servidor y herramientas útiles.\n${sep()}`, f:[{n:'/ping', v:'Latencia del bot'},{n:'/server', v:'Info del servidor'},{n:'/perfil', v:'Tu perfil de seguridad'},{n:'/invite', v:'Invitar el bot'},{n:'/backup', v:'Respaldar configuración'},{n:'/tutorial', v:'Guía rápida'}] },
-    td: { t:'📋 TODOS LOS COMANDOS', c:0x00d4ff, d:`${sep()}\nTodos los comandos disponibles.\n${sep()}`, f:[{n:'🛡️ Seguridad', v:'/panel /setup /settings /check /status /logs'},{n:'👮 Moderación', v:'/punish /whitelist /idban /idunban /lock /unlock /clear /nuke'},{n:'✅ Verificación', v:'/verificacion'},{n:'🔧 Utilidades', v:'/ping /server /perfil /invite /backup /tutorial /help'}] },
+    td: { t:'📋 TODOS LOS COMANDOS', c:0x00d4ff, d:`${sep()}\nTodos los comandos disponibles.\n${sep()}`, f:[{n:'🛡️ Seguridad', v:'/panel /antiraid /antinuke /settings /check /status /logs'},{n:'👮 Moderación', v:'/ban /kick /whitelist /idban /idunban /lock /unlock /clear /nuke'},{n:'✅ Verificación', v:'/verificacion'},{n:'🔧 Utilidades', v:'/ping /server /perfil /invite /backup /tutorial /help'}] },
   };
   const cat = cats[k];
   await i.update({
@@ -322,7 +263,9 @@ async function hpCat(i) {
 
 // ===== SELECT MENU =====
 async function handleSelect(i) {
-  const [_, prefix, action] = i.customId.split('_');
+  const parts = i.customId.split('_');
+  if (parts.length < 3) return;
+  const [_, prefix, action] = parts;
   const uid = i.values[0];
   const c = db.get(i.guild.id) || {};
   if (!c.whitelist) c.whitelist = [];
@@ -371,15 +314,6 @@ async function handleSelect(i) {
     const modal = new ModalBuilder().setCustomId('mod_rs').setTitle(`✏️ Motivo para ${act==='kick'?'expulsar':'bloquear'}`);
     modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('razon').setLabel('¿Por qué? (opcional)').setStyle(TextInputStyle.Short).setRequired(false).setMaxLength(200)));
     await i.showModal(modal);
-  }
-
-  if (prefix === 'stp') {
-    const key = action === 'ch' ? 'logChannel' : 'verifiedRole';
-    const c = db.get(i.guild.id) || {};
-    c[key] = uid;
-    db.set(i.guild.id, c);
-    const label = key === 'logChannel' ? '📢 Canal de logs' : '🎖️ Rol verificado';
-    await i.update({ embeds: [{ title:'✅ Guardado', description:`${sep()}\n**${label}** configurado correctamente.\n${sep()}`, color:0x00ff88, footer:{text:'Rox Security v1.0'} }], components: [backBtn('stp')] });
   }
 }
 

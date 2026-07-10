@@ -300,10 +300,12 @@ async function activateVerification(i) {
       components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('ver_main').setLabel('◀ Volver').setStyle(ButtonStyle.Secondary))],
     });
   } catch (e) {
-    await i.editReply({
+    const payload = {
       embeds: [{ title: '❌ Error', description: `${sep()}\nNo pude activar la verificación:\n**${e.message}**\n${sep()}`, color: 0xff4444, footer: { text: 'Rox Security v1.0' } }],
       components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('ver_main').setLabel('◀ Volver').setStyle(ButtonStyle.Secondary))],
-    });
+    };
+    if (i.deferred || i.replied) await i.editReply(payload).catch(() => {});
+    else await i.update(payload).catch(() => {});
   }
 }
 

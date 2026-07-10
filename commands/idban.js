@@ -5,11 +5,13 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('idban')
     .setDescription('Bloquear a alguien por su ID (no necesita estar en el servidor)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
     .addStringOption(opt => opt.setName('id').setDescription('ID del usuario').setRequired(true))
     .addStringOption(opt => opt.setName('razon').setDescription('Motivo del bloqueo')),
 
   async execute(interaction) {
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.BanMembers) && interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     const id = interaction.options.getString('id');
     const reason = interaction.options.getString('razon') || 'Sin motivo';
 

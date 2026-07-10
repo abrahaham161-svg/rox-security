@@ -1,20 +1,22 @@
 const db = require('./database');
+const log = require('./logger');
 
 const actionLog = new Map();
+const PUNISHMENTS = ['kick', 'ban', 'timeout'];
 
 const ACTIONS = {
-  createChannel: { label: 'Crear Canales', emoji: '📁', premium: false },
-  deleteChannel: { label: 'Borrar Canales', emoji: '🗑️', premium: false },
-  editChannel: { label: 'Editar Canales', emoji: '✏️', premium: true },
-  createRole: { label: 'Crear Roles', emoji: '🎭', premium: false },
-  deleteRole: { label: 'Borrar Roles', emoji: '🗑️', premium: false },
-  editRole: { label: 'Editar Roles', emoji: '✏️', premium: true },
-  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: false },
-  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: false },
-  kick: { label: 'Expulsar Usuarios', emoji: '👢', premium: false },
-  ban: { label: 'Banear Usuarios', emoji: '🔨', premium: false },
-  unban: { label: 'Desbanear Usuarios', emoji: '✅', premium: false },
-  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: false },
+  createChannel: { label: 'Crear Canales', emoji: '📁', premium: false, event: 'channelCreate' },
+  deleteChannel: { label: 'Borrar Canales', emoji: '🗑️', premium: false, event: 'channelDelete' },
+  editChannel: { label: 'Editar Canales', emoji: '✏️', premium: true, event: 'channelUpdate' },
+  createRole: { label: 'Crear Roles', emoji: '🎭', premium: false, event: 'roleCreate' },
+  deleteRole: { label: 'Borrar Roles', emoji: '🗑️', premium: false, event: 'roleDelete' },
+  editRole: { label: 'Editar Roles', emoji: '✏️', premium: true, event: 'roleUpdate' },
+  createEmoji: { label: 'Crear Emojis', emoji: '😀', premium: false, event: 'emojiCreate' },
+  deleteEmoji: { label: 'Borrar Emojis', emoji: '🗑️', premium: false, event: 'emojiDelete' },
+  kick: { label: 'Expulsar Usuarios', emoji: '👢', premium: false, event: 'guildMemberRemove' },
+  ban: { label: 'Banear Usuarios', emoji: '🔨', premium: false, event: 'guildBanAdd' },
+  unban: { label: 'Desbanear Usuarios', emoji: '✅', premium: false, event: 'guildBanRemove' },
+  editWebhook: { label: 'Editar Webhooks', emoji: '🔗', premium: false, event: 'webhookUpdate' },
 };
 
 function getConfig(guildId) {
@@ -23,10 +25,36 @@ function getConfig(guildId) {
   return c.antiNuke;
 }
 
+function getAction(actionType) {
+  return ACTIONS[actionType] || null;
+}
+
+async function enforceAction(guild, userId, actionType, member) {
+  const config = getConfig(guild.id);
+  const actionCfg = config[actionType];
+  if (!actionCfg || !actionCfg.enabled) return;
+
+  const punishment = actionCfg.punishment || 'kick';
+  const reason = `[Anti-Nuke] Límite excedido: ${ACTIONS[actionType]?.label || actionType}`;
+  let timeoutMinutes = '';
+
+  if (punishment === 'ban') {
+    await member.ban({ reason }).catch(() => {});
+  } else if (punishment === 'kick') {
+    await member.kick(reason).catch(() => {});
+  } else if (punishment === 'timeout') {
+    const ms = actionCfg.timeoutDuration || 600000;
+    timeoutMinutes = ` (${Math.round(ms / 60000)} min)`;
+    await member.timeout(ms, reason).catch(() => {});
+  }
+
+  await log.sendLog(guild, 'punish', '🔨 Anti-Nuke', `**${member.user.tag}** excedió límite de **${ACTIONS[actionType]?.label}**\n**Castigo:** ${punishment}${timeoutMinutes}`);
+}
+
 function checkAction(guildId, userId, actionType) {
   const config = getConfig(guildId);
-  const action = config[actionType];
-  if (!action || !action.enabled) return { blocked: false };
+  const actionCfg = config[actionType];
+  if (!actionCfg || !actionCfg.enabled) return { blocked: false };
 
   const key = `${guildId}-${userId}-${actionType}`;
   const now = Date.now();
@@ -38,15 +66,44 @@ function checkAction(guildId, userId, actionType) {
   recent.push(now);
   actionLog.set(key, recent);
 
-  if (recent.length > action.limit) {
-    return { blocked: true, limit: action.limit };
+  if (recent.length > (actionCfg.limit || 1)) {
+    return { blocked: true, limit: actionCfg.limit || 1, punishment: actionCfg.punishment || 'kick', timeoutDuration: actionCfg.timeoutDuration };
   }
 
   return { blocked: false };
 }
 
-function getActionInfo(actionType) {
-  return ACTIONS[actionType] || null;
+async function handleEvent(guild, actionType, auditType) {
+  if (!guild) return;
+  const config = getConfig(guild.id);
+  const actionCfg = config[actionType];
+  if (!actionCfg || !actionCfg.enabled) return;
+
+  const actionInfo = ACTIONS[actionType];
+  if (!actionInfo || actionInfo.premium) return;
+
+  try {
+    const audit = await guild.fetchAuditLogs({ type: auditType, limit: 1 });
+    const entry = audit.entries.first();
+    if (!entry || entry.executor.bot) return;
+    const userId = entry.executor.id;
+
+    const result = checkAction(guild.id, userId, actionType);
+    if (!result.blocked) return;
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member || !member.moderatable) return;
+
+    await enforceAction(guild, userId, actionType, member);
+  } catch (e) {
+    console.error(`[AntiNuke] Error en handleEvent (${actionType}):`, e.message);
+  }
 }
 
-module.exports = { ACTIONS, getConfig, checkAction, getActionInfo };
+function resetGuild(guildId) {
+  for (const key of actionLog.keys()) {
+    if (key.startsWith(guildId + '-')) actionLog.delete(key);
+  }
+}
+
+module.exports = { ACTIONS, PUNISHMENTS, getConfig, getAction, enforceAction, checkAction, handleEvent, resetGuild };

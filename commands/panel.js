@@ -7,6 +7,9 @@ module.exports = {
     .setDescription('Abre el panel de control interactivo'),
 
   async execute(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ Solo el dueño del servidor puede usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     await interaction.reply({ ...mainPanel(interaction.guild), flags: MessageFlags.Ephemeral });
   },
 };

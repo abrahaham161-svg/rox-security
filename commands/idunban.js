@@ -5,10 +5,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('idunban')
     .setDescription('Desbloquear a alguien por su ID')
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
     .addStringOption(opt => opt.setName('id').setDescription('ID del usuario').setRequired(true)),
 
   async execute(interaction) {
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.BanMembers) && interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     const id = interaction.options.getString('id');
 
     if (!/^\d{17,19}$/.test(id)) {

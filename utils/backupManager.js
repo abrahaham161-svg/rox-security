@@ -344,7 +344,7 @@ async function loadBackup(backupId, guild) {
     } catch (e) { results.push('❌ Miembros: ' + e.message); }
   }
 
-  await logger.sendLog(guild, 'success', '💾 Backup cargado', `Backup **${backupId}** cargado por ${guild.members.cache.get(guild.ownerId)?.user?.tag || 'Desconocido'}\n${results.join('\n')}`);
+  await logger.sendLog(guild, 'success', '💾 Backup cargado', `Backup **${backupId}** cargado por ${guild.members.cache.get(guild.ownerId)?.user?.tag || 'Desconocido'}\n${results.join('\n')}`).catch(() => {});
 
   return { success: true, results };
 }

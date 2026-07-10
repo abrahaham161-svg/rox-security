@@ -1,13 +1,15 @@
-const { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const database = require('../utils/database');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('logs')
-    .setDescription('Ver los últimos eventos de seguridad')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDescription('Ver los últimos eventos de seguridad'),
 
   async execute(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ Solo el dueño del servidor puede usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     const config = database.get(interaction.guild.id) || { logs: [] };
     const logs = config.logs || [];
 

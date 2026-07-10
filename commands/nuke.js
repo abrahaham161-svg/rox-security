@@ -4,10 +4,12 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('nuke')
     .setDescription('Clonar y eliminar un canal (lo deja como nuevo)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addChannelOption(opt => opt.setName('canal').setDescription('El canal a nukear (por defecto este)')),
 
   async execute(interaction) {
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels) && interaction.user.id !== interaction.guild.ownerId) {
+      return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
+    }
     if (!interaction.guild) {
       await interaction.reply({ embeds: [{ title: '❌ Error', description: '━━━━━━━━━━━━━━━━━━━━━━━━\nEsto solo funciona en un servidor.\n━━━━━━━━━━━━━━━━━━━━━━━━', color: 0xff4444, footer: { text: 'Rox Security v1.0' } }], flags: MessageFlags.Ephemeral });
       return;
