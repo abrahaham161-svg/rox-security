@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } = require('discord.js');
 const logger = require('../utils/logger');
+const { canAccess } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,7 +10,7 @@ module.exports = {
     .addStringOption(opt => opt.setName('razon').setDescription('Motivo')),
 
   async execute(interaction) {
-    if (!interaction.memberPermissions.has(PermissionFlagsBits.KickMembers) && interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { permission: PermissionFlagsBits.KickMembers })) {
       return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
     }
     const user = interaction.options.getUser('usuario');

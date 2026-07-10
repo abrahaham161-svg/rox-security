@@ -2,6 +2,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Modal
 const db = require('../utils/database');
 const antiNuke = require('../utils/antiNuke');
 const log = require('../utils/logger');
+const { canAccess } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,7 +10,7 @@ module.exports = {
     .setDescription('Protección contra acciones masivas (anti-nuke)'),
 
   async execute(interaction) {
-    if (interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { ownerOnly: true })) {
       return interaction.reply({ content: '❌ Solo el dueño del servidor puede usar este comando.', flags: MessageFlags.Ephemeral });
     }
     await interaction.reply({ ...buildMenu(interaction.guild), flags: MessageFlags.Ephemeral });

@@ -1,4 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { canAccess } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,7 +8,7 @@ module.exports = {
     .addIntegerOption(opt => opt.setName('cantidad').setDescription('Mensajes a borrar (1-100)').setRequired(true).setMinValue(1).setMaxValue(100)),
 
   async execute(interaction) {
-    if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages) && interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { permission: PermissionFlagsBits.ManageMessages })) {
       return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
     }
     const amount = interaction.options.getInteger('cantidad');

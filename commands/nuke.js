@@ -1,4 +1,5 @@
 const { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } = require('discord.js');
+const { canAccess } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,7 +8,7 @@ module.exports = {
     .addChannelOption(opt => opt.setName('canal').setDescription('El canal a nukear (por defecto este)')),
 
   async execute(interaction) {
-    if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels) && interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { permission: PermissionFlagsBits.ManageChannels })) {
       return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
     }
     if (!interaction.guild) {

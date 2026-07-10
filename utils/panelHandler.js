@@ -3,6 +3,7 @@ const log = require('./logger');
 const backupCmd = require('../commands/backup');
 const antiNukeCmd = require('../commands/antinuke');
 const antiRaidCmd = require('../commands/antiraid');
+const botadminCmd = require('../commands/botadmin');
 const ver = require('./verificationManager');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, UserSelectMenuBuilder, ChannelSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags, ChannelType } = require('discord.js');
 
@@ -60,6 +61,11 @@ async function handle(i) {
       else await antiNukeCmd.handleButton(i);
     }
     else if (id.startsWith('ar_')) await antiRaidCmd.handleButton(i);
+    else if (id.startsWith('ba_')) {
+      if (i.isModalSubmit()) await botadminCmd.handleModal(i);
+      else if (i.isStringSelectMenu()) await botadminCmd.handleSelect(i);
+      else await botadminCmd.handleButton(i);
+    }
     else if (id.startsWith('ver_')) await handleVerification(i);
     else if (id === 'verify_btn') await ver.handleVerifyButton(i);
     else if (id === 'verify_showmodal') await ver.showVerifyModal(i);

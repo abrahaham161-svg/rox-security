@@ -2,6 +2,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Messa
 const database = require('../utils/database');
 const antiRaid = require('../utils/antiRaid');
 const logger = require('../utils/logger');
+const { canAccess } = require('../utils/permissions');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,7 +10,7 @@ module.exports = {
     .setDescription('Protección anti-raid (detección de joins masivos)'),
 
   async execute(interaction) {
-    if (interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { ownerOnly: true })) {
       return interaction.reply({ content: '❌ No tenés permiso para usar este comando.', flags: MessageFlags.Ephemeral });
     }
     await interaction.reply({ ...buildPanel(interaction.guild), flags: MessageFlags.Ephemeral });

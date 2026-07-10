@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } = require('discord.js');
 const backupManager = require('../utils/backupManager');
 const database = require('../utils/database');
+const { canAccess } = require('../utils/permissions');
 const logger = require('../utils/logger');
 
 module.exports = {
@@ -9,7 +10,7 @@ module.exports = {
     .setDescription('Gestionar respaldos del servidor'),
 
   async execute(interaction) {
-    if (interaction.user.id !== interaction.guild.ownerId) {
+    if (!canAccess(interaction, { ownerOnly: true })) {
       return interaction.reply({ content: '❌ Solo el dueño del servidor puede usar este comando.', flags: MessageFlags.Ephemeral });
     }
     const row1 = new ActionRowBuilder().addComponents(
