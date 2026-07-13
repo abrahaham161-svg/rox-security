@@ -96,8 +96,25 @@ function getIP(req) {
   return (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
 }
 
+// --- Simple rate limiter ---
+const rateLimitMap = new Map();
+function rateLimit(ip, max = 5, windowMs = 60000) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.start > windowMs) {
+    rateLimitMap.set(ip, { start: now, count: 1 });
+    return { allowed: true };
+  }
+  entry.count++;
+  if (entry.count > max) {
+    return { allowed: false, retryAfter: Math.ceil((windowMs - (now - entry.start)) / 1000) };
+  }
+  return { allowed: true };
+}
+
 function auth(req, res) {
-  if (req.query.key !== ADMIN_KEY) {
+  const key = (req.headers.authorization || '').replace('Bearer ', '') || req.query.key;
+  if (key !== ADMIN_KEY) {
     res.status(401).json({ error: 'Unauthorized' });
     return false;
   }
@@ -106,8 +123,10 @@ function auth(req, res) {
 
 // --- Form submission ---
 apiApp.post('/api/contact', async (req, res) => {
-  const { gmail, social, servicio, servicioTexto, contenido } = req.body;
   const ip = getIP(req);
+  const rl = rateLimit(ip, 3, 60000);
+  if (!rl.allowed) return res.status(429).json({ error: 'Too many requests', retryAfter: rl.retryAfter });
+  const { gmail, social, servicio, servicioTexto, contenido } = req.body;
   try {
     const blocked = readJSON('blocked.json');
     if (blocked.includes(ip)) return res.status(403).json({ error: 'Blocked' });
@@ -147,8 +166,10 @@ apiApp.post('/api/contact', async (req, res) => {
 
 // --- View tracking ---
 apiApp.post('/api/track-view', async (req, res) => {
-  const views = readJSON('views.json');
   const ip = getIP(req);
+  const rl = rateLimit(ip, 10, 60000);
+  if (!rl.allowed) return res.status(429).json({ ok: false });
+  const views = readJSON('views.json');
   let pais = 'Desconocido';
   try {
     if (ip && ip !== 'unknown') {
@@ -252,6 +273,9 @@ apiApp.get('/api/reviews', (req, res) => {
 });
 
 apiApp.post('/api/reviews', (req, res) => {
+  const ip = getIP(req);
+  const rl = rateLimit(ip, 3, 60000);
+  if (!rl.allowed) return res.status(429).json({ error: 'Too many requests', retryAfter: rl.retryAfter });
   const { name, stars, text } = req.body;
   if (!name || !stars || stars < 1 || stars > 5) {
     return res.status(400).json({ error: 'Name and stars (1-5) required' });
