@@ -65,6 +65,9 @@ client.once('ready', async () => {
     activities: [{ name: '/help | Rox Security', type: 3 }],
     status: 'online',
   });
+
+  updateStats(client);
+  setInterval(() => updateStats(client), 5 * 60 * 1000);
 });
 
 client.login(config.token);
@@ -332,3 +335,45 @@ apiApp.delete('/api/admin/passwords/:id', (req, res) => {
 
 const API_PORT = process.env.API_PORT || process.env.PORT || 3001;
 apiApp.listen(API_PORT, () => console.log(`📨 API server on port ${API_PORT}`));
+
+const STATS_PATH = path.join(__dirname, '..', 'Rox Forms', 'dashboard', 'stats.json');
+
+async function updateStats(client) {
+  try {
+    const memberIds = new Set();
+
+    for (const [, guild] of client.guilds.cache) {
+      try {
+        const members = await guild.members.fetch();
+        for (const [, member] of members) {
+          if (!member.user.bot) memberIds.add(member.id);
+        }
+      } catch {}
+    }
+
+    const existing = {};
+    try { Object.assign(existing, JSON.parse(fs.readFileSync(STATS_PATH, 'utf8'))); } catch {}
+
+    existing.roxSecurity = {
+      servers: client.guilds.cache.size,
+      memberIds: Array.from(memberIds),
+      updatedAt: new Date().toISOString()
+    };
+
+    const allIds = new Set(memberIds);
+    if (existing.roxForms) {
+      for (const id of existing.roxForms.memberIds || []) allIds.add(id);
+    }
+
+    existing.combined = {
+      servers: (existing.roxForms?.servers || 0) + (existing.roxSecurity?.servers || 0),
+      members: allIds.size,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (!fs.existsSync(path.dirname(STATS_PATH))) fs.mkdirSync(path.dirname(STATS_PATH), { recursive: true });
+    fs.writeFileSync(STATS_PATH, JSON.stringify(existing, null, 2));
+  } catch (err) {
+    console.error('Error actualizando stats:', err);
+  }
+}
